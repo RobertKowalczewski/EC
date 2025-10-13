@@ -394,12 +394,16 @@ function plot_cycle(data, solution, title_str)
 end
 
 
+data = CSV.read("lab1/TSPB.csv", DataFrame; header=["x", "y", "w"])
 
-# plot_cycle(distance_matrix, random_solution, "Random solution")
-# savefig("greedy_cycle_plotame.png")
+plot_cycle(data, fixed_random_scores, "Random solution")
+savefig("random solution_B.png")
 # plot_cycle(data, nn_solution_fixed, "Best Solution: NN last")
-# savefig("greedy_cycle.png")
+# savefig("NN_B.png")
 # plot_cycle(data, nn_all_solution_fixed, "Best Solution: NN all")
-# savefig("greedy_cycle.png")
+# savefig("NN_All_B.png")
+
+
+
 # plot_cycle(data, greedy_solution_fixed, "Best Solution: Greedy Cycle")
-# savefig("greedy_cycle.png")
+# savefig("greedy_cycle_B.png")
