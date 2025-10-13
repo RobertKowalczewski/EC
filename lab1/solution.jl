@@ -4,6 +4,16 @@ function euclidean(a, b)
     return round(sqrt((a[1] - b[1])^2 + (a[2] - b[2])^2))
 end
 
+function calculate_cycle_length(solution, distance_matrix)
+    score = 0
+    n = length(solution)
+    for i in 1:n
+        next_i = mod1(i + 1, n)  # Wraps around to 1 when i == n
+        score += distance_matrix[solution[i], solution[next_i]]
+    end
+    return score
+end
+
 function create_distance_matrix(data_path)
     data = CSV.read(data_path, DataFrame; header=["x", "y", "w"])
     distance_matrix = zeros(nrow(data), nrow(data))
@@ -19,41 +29,7 @@ function create_distance_matrix(data_path)
     return distance_matrix
 end
 
-# function find_best_solution(search_function, iterations, distance_matrix)
-#     best_score = Inf
-#     best_solution = nothing
-#     current = 1
-
-#     for i in 1:iterations
-#         score, solution = search_function(distance_matrix, current)
-#         current += 1
-#         if score < best_score
-#             best_score = score
-#             best_solution = solution
-#         end
-#     end
-
-#     return best_score, best_solution
-# end
-
-function find_best_solution_random(search_function, iterations, distance_matrix)
-    scores = Float64[]
-    solutions = Vector{Vector{Int}}(undef, iterations)
-    for i in 1:iterations
-        score, solution = search_function(distance_matrix)
-        push!(scores, score)
-        solutions[i] = solution
-    end
-    min_s = argmin(scores)
-    max_s = argmax(scores)
-    avg_s = mean(scores)
-    println("Min: $(scores[min_s]) at run $(min_s)")
-    println("Max: $(scores[max_s]) at run $(max_s)")
-    println("Avg: $(avg_s)")
-    return scores, solutions
-end
-
-function find_best_solution_greedy(search_function, distance_matrix)
+function find_best_solution(search_function, distance_matrix)
     n = ceil(Int, size(distance_matrix)[1] / 2)
     scores = Float64[]
     solutions = Vector{Vector{Int}}(undef, n)
@@ -121,41 +97,6 @@ function nn_last_node(distance_matrix, start)
     return score, solution
 end
 
-# function nn_all(distance_matrix, start)
-#     n = size(distance_matrix)[1]
-#     cycle_length = ceil(Int, n / 2)
-
-#     solution = Vector{Int}(undef, cycle_length)
-#     visited = Set{Int}()
-
-#     score = 0
-#     current = start
-
-#     solution[1] = current
-#     push!(visited, current)
-
-#     for node in 2:cycle_length
-#         smallest_distance = Inf
-#         smallest_distance_node = nothing
-#         from = nothing # index after which to insert the new node
-#         for i in 1:node
-#             for j in 1:n
-#                 distance = distance_matrix[solution[i], j]
-#                 if distance < smallest_distance
-#                     smallest_distance = distance
-#                     smallest_distance_node = j
-#                     from = i
-#                 end
-#             end
-#         end
-#     end
-
-#     insert!()
-
-
-# end
-
-
 function nn_all(distance_matrix, start)
     n = size(distance_matrix)[1]
     cycle_length = ceil(Int, n / 2)
@@ -198,38 +139,38 @@ function nn_all(distance_matrix, start)
         best_pos = 0
         for pos in 1:length(solution)
             prev = solution[pos]
-            nxt = solution[mod1(pos+1, length(solution))]
+            nxt = solution[mod1(pos + 1, length(solution))]
             increase = distance_matrix[prev, candidate] + distance_matrix[candidate, nxt] - distance_matrix[prev, nxt]
             if increase < best_increase
                 best_increase = increase
                 best_pos = pos
             end
         end
-        insert!(solution, best_pos+1, candidate)
+        insert!(solution, best_pos + 1, candidate)
         push!(visited, candidate)
     end
 
     # Calculate total score
     score = 0
     for i in 1:cycle_length
-        score += distance_matrix[solution[i], solution[mod1(i+1, cycle_length)]]
+        score += distance_matrix[solution[i], solution[mod1(i + 1, cycle_length)]]
     end
 
     return score, solution
 end
-k
-# todo round mathematically euclidean
+
 function greedy_cycle(distance_matrix, start=1)
-    n = ceil(Int, size(distance_matrix)[1] / 2)
-    solution = Array{Int}(undef, n)
+    n_total = size(distance_matrix)[1]
+    cycle_length = ceil(Int, n_total / 2)
+    solution = Array{Int}(undef, cycle_length)
     solution_set = Set{Int}()
 
     solution[1] = start
     push!(solution_set, start)
 
-    #1. Choose closest node
+    # Choose closest node to start
     smallest_distance, closest_node = Inf, nothing
-    for node in 1:size(distance_matrix)[1]
+    for node in 1:n_total
         if node != start
             d = distance_matrix[start, node]
             if d < smallest_distance
@@ -242,24 +183,29 @@ function greedy_cycle(distance_matrix, start=1)
     solution[2] = closest_node
     push!(solution_set, closest_node)
 
-    for solution_node in 3:n
-        best_cycle, best_node = Inf, nothing
-        for node in 1:size(distance_matrix)[1]
-            if node ∉ solution_set
-                new_solution = Array{Int}(undef, solution_node)
-                new_solution[1:solution_node-1] = solution[1:solution_node-1]
-                new_solution[solution_node] = node
+    # Add remaining nodes
+    for solution_index in 3:cycle_length
+        best_cycle_length, best_node = Inf, nothing
 
-                cycle_length = calculate_cycle_length(new_solution, distance_matrix)
-                if cycle_length < best_cycle
-                    best_cycle = cycle_length
-                    best_node = node
+        for candidate_node in 1:n_total
+            if candidate_node ∉ solution_set
+                # Create temporary solution with this candidate
+                temp_solution = solution[1:solution_index-1]
+                push!(temp_solution, candidate_node)
+
+                cycle_length_temp = calculate_cycle_length(temp_solution, distance_matrix)
+
+                if cycle_length_temp < best_cycle_length
+                    best_cycle_length = cycle_length_temp
+                    best_node = candidate_node
                 end
             end
         end
-        solution[solution_node] = best_node
+
+        solution[solution_index] = best_node
         push!(solution_set, best_node)
     end
+
     return calculate_cycle_length(solution, distance_matrix), solution
 end
 
@@ -269,39 +215,36 @@ distance_matrix = create_distance_matrix("lab1/TSPB.csv")
 
 
 println("Running random search")
-random_score, random_solution = find_best_solution_random(random_search, 200, distance_matrix)
+random_score, random_solution = find_best_solution(random_search, distance_matrix)
 #println("best score: ", random_score)
 #println("solution: ", random_solution)
 
 println("\nRunning nn_last search")
-nn_score, nn_solution = find_best_solution_greedy(nn_last_node,distance_matrix)
+nn_score, nn_solution = find_best_solution(nn_last_node, distance_matrix)
 #println("best score: ", nn_score)
 #println("solution: ", nn_solution)
 
 println("\nRunning nn_all search")
-nn_all_score, nn_alll_solution = find_best_solution_greedy(nn_all,distance_matrix)
+nn_all_score, nn_alll_solution = find_best_solution(nn_all, distance_matrix)
 #println("best score: ", nn_all_score)
 #println("solution: ", nn_alll_solution)
 
 # best solution doesn't match for some reason? 
 println("\nRunning greedy_cycle search")
-greedy_score, greedy_solution = find_best_solution_greedy(greedy_cycle, distance_matrix)
+greedy_score, greedy_solution = find_best_solution(greedy_cycle, distance_matrix)
 #println("best score: ", greedy_score)
-
-
-
 
 
 function report_best_solutions(method_results)
     best_scores = []
     best_solutions = []
-    
+
     for (scores, solutions) in method_results
         min_idx = argmin(scores)
         push!(best_scores, scores[min_idx])
         push!(best_solutions, solutions[min_idx])
     end
-    
+
     return best_scores, best_solutions
 end
 
@@ -309,17 +252,17 @@ function print_zero_indexed_solutions(method_names, best_solutions)
     println("\n=== Best Solutions (0-indexed) ===")
     for (name, solution) in zip(method_names, best_solutions)
         # Convert from 1-indexed to 0-indexed
-        zero_indexed = [node-1 for node in solution]
+        zero_indexed = [node - 1 for node in solution]
         println("$name:")
         println("[$(join(zero_indexed, ", "))]")
         println()
 
     end
-    
+
     # Also print a consolidated list format for easy copying
     println("=== Solutions for Report ===")
     for (name, solution) in zip(method_names, best_solutions)
-        zero_indexed = [node-1 for node in solution]
+        zero_indexed = [node - 1 for node in solution]
         println("$name: [$(join(zero_indexed, ", "))]")
     end
 end
@@ -353,15 +296,15 @@ function random_search_with_start(distance_matrix)
     n = ceil(Int, size(distance_matrix)[1] / 2)
     # Always include node 1
     sampled_nodes = [1]
-    
+
     # Sample the remaining nodes
     remaining_nodes = setdiff(1:size(distance_matrix)[1], [1])
     needed_nodes = n - 1
     additional_nodes = sample(remaining_nodes, needed_nodes; replace=false)
-    
+
     # Combine to form the complete solution
     append!(sampled_nodes, additional_nodes)
-    
+
     score = 0
     for i in 1:length(sampled_nodes)-1
         score += distance_matrix[sampled_nodes[i], sampled_nodes[i+1]]
@@ -409,7 +352,7 @@ fixed_method_results = [
 println("\n=== Best Solutions (0-indexed) starting from node 0 ===")
 for (name, (score, solution)) in zip(method_names, fixed_method_results)
     # Convert from 1-indexed to 0-indexed
-    zero_indexed = [node-1 for node in solution]
+    zero_indexed = [node - 1 for node in solution]
     println("$name: [$(join(zero_indexed, ", "))]")
     println("Score: $score")
     println()
@@ -418,6 +361,6 @@ end
 # Print a consolidated list format for easy copying
 println("=== Solutions for Report (all starting from node 0) ===")
 for (name, (score, solution)) in zip(method_names, fixed_method_results)
-    zero_indexed = [node-1 for node in solution]
+    zero_indexed = [node - 1 for node in solution]
     println("$name: [$(join(zero_indexed, ", "))]")
 end
