@@ -227,7 +227,7 @@ end
 
 # distance_matrix = create_distance_matrix("lab1/TSPA.csv")
 
-distance_matrix = create_distance_matrix("lab1/TSPA.csv")
+distance_matrix = create_distance_matrix("lab1/TSPB.csv")
 
 
 println("Running random search")
@@ -275,7 +275,6 @@ function print_zero_indexed_solutions(method_names, best_solutions)
 
     end
 
-    # Also print a consolidated list format for easy copying
     println("=== Solutions for Report ===")
     for (name, solution) in zip(method_names, best_solutions)
         zero_indexed = [node - 1 for node in solution]
@@ -293,13 +292,10 @@ method_results = [
 
 method_names = ["Random Search", "Nearest Neighbor", "NN All", "Greedy Cycle"]
 
-# Find best solution for each method
 best_scores, best_solutions = report_best_solutions(method_results)
 
-# Print the best solutions with 0-indexed nodes
 print_zero_indexed_solutions(method_names, best_solutions)
 
-# You can also print a summary of the best scores
 println("\n=== Best Scores ===")
 for (name, score) in zip(method_names, best_scores)
     println("$name: $score")
@@ -356,7 +352,7 @@ println("\nRunning greedy_cycle from node 1")
 greedy_score_fixed, greedy_solution_fixed = greedy_cycle(distance_matrix, 1)
 println("Score: $greedy_score_fixed")
 
-# Collect fixed results that all start from node 1
+# fixed results that all start from node 1
 fixed_method_results = [
     (fixed_random_scores[min_idx], fixed_random_solutions[min_idx]),
     (nn_score_fixed, nn_solution_fixed),
@@ -364,7 +360,7 @@ fixed_method_results = [
     (greedy_score_fixed, greedy_solution_fixed)
 ]
 
-# Pretty print the solutions for the report
+#for the report
 println("\n=== Best Solutions (0-indexed) starting from node 0 ===")
 for (name, (score, solution)) in zip(method_names, fixed_method_results)
     # Convert from 1-indexed to 0-indexed
@@ -374,9 +370,36 @@ for (name, (score, solution)) in zip(method_names, fixed_method_results)
     println()
 end
 
-# Print a consolidated list format for easy copying
-println("=== Solutions for Report (all starting from node 0) ===")
-for (name, (score, solution)) in zip(method_names, fixed_method_results)
-    zero_indexed = [node - 1 for node in solution]
-    println("$name: [$(join(zero_indexed, ", "))]")
+
+
+function plot_cycle(data, solution, title_str)
+    xs = data[solution, "x"]
+    ys = data[solution, "y"]
+    ws = data[solution, "w"]
+
+    # Close the cycle
+    xs = vcat(xs, xs[1])
+    ys = vcat(ys, ys[1])
+
+    # Plot nodes: color or size by cost
+    scatter(data[!, "x"], data[!, "y"],
+        marker_z=data[!, "w"], # color by cost
+        ms=8,                  # marker size
+        color=:grays,          # greyscale
+        label="Nodes",
+        title=title_str,
+        xlabel="x", ylabel="y")
+    # Plot cycle path
+    plot!(xs, ys, lw=2, label="Cycle")
 end
+
+
+
+# plot_cycle(distance_matrix, random_solution, "Random solution")
+# savefig("greedy_cycle_plotame.png")
+# plot_cycle(data, nn_solution_fixed, "Best Solution: NN last")
+# savefig("greedy_cycle.png")
+# plot_cycle(data, nn_all_solution_fixed, "Best Solution: NN all")
+# savefig("greedy_cycle.png")
+# plot_cycle(data, greedy_solution_fixed, "Best Solution: Greedy Cycle")
+# savefig("greedy_cycle.png")
