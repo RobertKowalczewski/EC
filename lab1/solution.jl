@@ -162,51 +162,67 @@ end
 function greedy_cycle(distance_matrix, start=1)
     n_total = size(distance_matrix)[1]
     cycle_length = ceil(Int, n_total / 2)
-    solution = Array{Int}(undef, cycle_length)
-    solution_set = Set{Int}()
 
-    solution[1] = start
-    push!(solution_set, start)
+    # Initialize with start node
+    solution = [start]
+    visited = Set([start])
 
-    # Choose closest node to start
-    smallest_distance, closest_node = Inf, nothing
+    # Find closest node to start node
+    closest_node = nothing
+    min_dist = Inf
     for node in 1:n_total
         if node != start
             d = distance_matrix[start, node]
-            if d < smallest_distance
-                smallest_distance = d
+            if d < min_dist
+                min_dist = d
                 closest_node = node
             end
         end
     end
 
-    solution[2] = closest_node
-    push!(solution_set, closest_node)
+    # Add closest node to create initial cycle
+    push!(solution, closest_node)
+    push!(visited, closest_node)
 
-    # Add remaining nodes
-    for solution_index in 3:cycle_length
-        best_cycle_length, best_node = Inf, nothing
+    # Complete the cycle
+    while length(solution) < cycle_length
+        best_insertion_cost = Inf
+        best_node = nothing
+        best_position = nothing
 
-        for candidate_node in 1:n_total
-            if candidate_node ∉ solution_set
-                # Create temporary solution with this candidate
-                temp_solution = solution[1:solution_index-1]
-                push!(temp_solution, candidate_node)
+        # For each unvisited node
+        for candidate in 1:n_total
+            if candidate ∉ visited
+                # Try inserting at each position in the cycle
+                for pos in 1:length(solution)
+                    # Calculate the insertion cost: remove edge i->i+1, add edges i->candidate and candidate->i+1
+                    i = pos
+                    j = mod1(i + 1, length(solution))
 
-                cycle_length_temp = calculate_cycle_length(temp_solution, distance_matrix)
+                    # Calculate cost increase for inserting candidate between i and j
+                    removal_cost = distance_matrix[solution[i], solution[j]]
+                    insertion_cost = distance_matrix[solution[i], candidate] +
+                                     distance_matrix[candidate, solution[j]]
+                    delta = insertion_cost - removal_cost
 
-                if cycle_length_temp < best_cycle_length
-                    best_cycle_length = cycle_length_temp
-                    best_node = candidate_node
+                    if delta < best_insertion_cost
+                        best_insertion_cost = delta
+                        best_node = candidate
+                        best_position = pos
+                    end
                 end
             end
         end
 
-        solution[solution_index] = best_node
-        push!(solution_set, best_node)
+        # Insert the best node at the best position
+        insert!(solution, best_position + 1, best_node)
+        push!(visited, best_node)
     end
 
-    return calculate_cycle_length(solution, distance_matrix), solution
+    # Calculate the complete cycle length
+    total_cost = calculate_cycle_length(solution, distance_matrix)
+
+    return total_cost, solution
 end
 
 # distance_matrix = create_distance_matrix("lab1/TSPA.csv")
