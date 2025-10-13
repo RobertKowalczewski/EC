@@ -21,7 +21,7 @@ function create_distance_matrix(data_path)
     for i in 1:nrow(data)
         for j in 1:nrow(data)
             if i != j
-                distance_matrix[i, j] = euclidean(data[i, ["x", "y"]], data[j, ["x", "y"]]) + data[j, "w"]
+                distance_matrix[i, j] = euclidean((data[i, "x"], data[i, "y"]), (data[j, "x"], data[j, "y"])) + data[j, "w"]
             end
         end
     end
@@ -211,7 +211,7 @@ end
 
 # distance_matrix = create_distance_matrix("lab1/TSPA.csv")
 
-distance_matrix = create_distance_matrix("lab1/TSPB.csv")
+distance_matrix = create_distance_matrix("lab1/TSPA.csv")
 
 
 println("Running random search")
