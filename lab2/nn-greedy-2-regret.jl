@@ -1,4 +1,4 @@
-function greedy_2_regret(distance_matrix, costs, weights, start=1)
+function nn_greedy_2_regret(distance_matrix, costs, weights, start=1)
     n = size(distance_matrix)[1]
     cycle_length = ceil(Int, n / 2)
     solution = [start]
