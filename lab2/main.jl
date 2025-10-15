@@ -1,0 +1,26 @@
+include("helpers.jl")
+include("greedy-2-regret.jl")
+
+println("TSPA:")
+data_path = "lab1/TSPA.csv"
+distance_matrix, costs = prepare_data(data_path)
+println("Greedy 2-Regret")
+scores, solutions = test_algorithm(greedy_2_regret, distance_matrix, costs, weights=[1,0])
+plot_best_solution(scores, solutions, data_path, "TSPA.csv - Greedy 2-Regret", "lab2/TSPA/greedy.png")
+println("\n")
+println("Greedy 2-Regret with weighted sum criterion")
+scores, solutions = test_algorithm(greedy_2_regret, distance_matrix, costs, weights=[1,1])
+plot_best_solution(scores, solutions, data_path, "TSPA.csv - Weighted Greedy 2-Regret", "lab2/TSPA/weighted_greedy.png")
+println("\n")
+
+println("TSPB:")
+data_path = "lab1/TSPB.csv"
+distance_matrix, costs = prepare_data(data_path)
+println("Greedy 2-Regret")
+scores, solutions = test_algorithm(greedy_2_regret, distance_matrix, costs, weights=[1,0])
+plot_best_solution(scores, solutions, data_path, "TSPB.csv - Greedy 2-Regret", "lab2/TSPB/greedy.png")
+println("\n")
+println("Greedy 2-Regret with weighted sum criterion")
+scores, solutions = test_algorithm(greedy_2_regret, distance_matrix, costs, weights=[1,1])
+plot_best_solution(scores, solutions, data_path, "TSPB.csv - Weighted Greedy 2-Regret", "lab2/TSPB/weighted_greedy.png")
+println("\n")
