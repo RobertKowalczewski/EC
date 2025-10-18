@@ -22,7 +22,7 @@ function nn_greedy_2_regret(distance_matrix, costs, weights, start=1)
         best_score = -Inf
         best_node = nothing
         best_insertion_pos = nothing
-        
+
         for i in 1:n
             if i ∉ visited
                 # Track positions and costs
@@ -39,15 +39,15 @@ function nn_greedy_2_regret(distance_matrix, costs, weights, start=1)
                 insertion_cost = distance_matrix[solution[end], i] + costs[i]
                 if insertion_cost < best_cost
                     second_best_cost = best_cost
-                    
+
                     best_cost = insertion_cost
                     best_pos = length(solution) + 1
                 else
                     second_best_cost = insertion_cost
                 end
-                
-                # Find insertion cost for each possible position in the current solution (excluding first and last node)
-                for pos in 2:(length(solution)-1)
+
+                # Find insertion cost for each possible position in the current solution (excluding before first and after last node)
+                for pos in 1:(length(solution)-1)
                     prev = solution[pos]
                     next = solution[pos+1]
                     insertion_cost = distance_matrix[prev, i] + costs[i] + distance_matrix[i, next] - distance_matrix[prev, next]
@@ -58,12 +58,12 @@ function nn_greedy_2_regret(distance_matrix, costs, weights, start=1)
                         best_pos = pos + 1
                     elseif insertion_cost < second_best_cost
                         second_best_cost = insertion_cost
-                    end     
+                    end
                 end
-                
+
                 regret = second_best_cost - best_cost
                 score = weights[1] * regret - weights[2] * best_cost # if weights=[1,0], weighted 2-regret heuristic becomes identical to the pure greedy 2-regret heuristic
-                
+
                 if score > best_score
                     best_score = score
                     best_node = i
@@ -71,10 +71,10 @@ function nn_greedy_2_regret(distance_matrix, costs, weights, start=1)
                 end
             end
         end
-        
+
         insert!(solution, best_insertion_pos, best_node)
         push!(visited, best_node)
     end
-    
+
     return solution
 end

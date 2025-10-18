@@ -22,15 +22,15 @@ function greedy_cycle_2_regret(distance_matrix, costs, weights, start=1)
         best_score = -Inf
         best_node = nothing
         best_insertion_pos = nothing
-        
+
         for i in 1:n
             if i ∉ visited
                 # Track positions and costs
                 best_cost = Inf
                 second_best_cost = Inf
                 best_pos = nothing
-                
-                # Find insertion cost for each possible position in the current solution (excluding first and last node)
+
+                # Find insertion cost for each possible position in the current solution
                 for pos in eachindex(solution)
                     prev = solution[pos]
                     next = solution[mod1(pos + 1, length(solution))]
@@ -42,12 +42,12 @@ function greedy_cycle_2_regret(distance_matrix, costs, weights, start=1)
                         best_pos = pos + 1
                     elseif insertion_cost < second_best_cost
                         second_best_cost = insertion_cost
-                    end     
+                    end
                 end
-                
+
                 regret = second_best_cost - best_cost
                 score = weights[1] * regret - weights[2] * best_cost # if weights=[1,0], weighted 2-regret heuristic becomes identical to the pure greedy 2-regret heuristic
-                
+
                 if score > best_score
                     best_score = score
                     best_node = i
@@ -55,10 +55,10 @@ function greedy_cycle_2_regret(distance_matrix, costs, weights, start=1)
                 end
             end
         end
-        
+
         insert!(solution, best_insertion_pos, best_node)
         push!(visited, best_node)
     end
-    
+
     return solution
 end
