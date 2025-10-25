@@ -1,4 +1,4 @@
-using Random, ProgressMeter
+using Random, ProgressMeter, Statistics
 
 include("moves.jl")
 include("helpers.jl")
@@ -6,28 +6,47 @@ include("nn-greedy-2-regret.jl")
 
 
 function test_algorithms(distance_matrix, costs)
-    @showprogress 0.5 for start_type in [random_start, nn_greedy_2_regret
-        ] # TODO
-        @showprogress 0.5 for local_search_func in [greedy_local_search] # TODO
-            @showprogress 0.5 for intra_function in [intra_two_nodes_exchange]#, intra_two_edges_exchange] # TODO
+    for start_type in [random_start, nn_greedy_2_regret] # TODO
+        for local_search_func in [steepest_local_search, greedy_local_search] # TODO
+            for intra_function in [intra_two_edges_exchange, intra_two_nodes_exchange] # TODO
                 
                 objectives = []
                 solutions = []
+                starts = []
+                start_objectives = []
+                times = []
 
-                @showprogress 0.5 "runs" for run in 1:200
+                fmt(x) = round(x; digits=2)
+
+                @showprogress 0.1 "runs" for run in 1:200
                     starting_solution = start_type(distance_matrix,costs, [0.5, 0.5], run)
-                    objective, solution = local_search_func(starting_solution, distance_matrix, costs, intra_function, inter_two_nodes_exchange)
+                    t = @elapsed begin
+                        objective, solution = local_search_func(starting_solution, distance_matrix, costs, intra_function, inter_two_nodes_exchange)
+                    end
+                    push!(times, t)
                     push!(objectives, objective)
                     push!(solutions, solution)
+
+                    push!(starts, starting_solution)
+                    push!(start_objectives, calculate_cycle_length(starting_solution, distance_matrix, costs))
                 end
 
                 min_s = argmin(objectives)
                 max_s = argmax(objectives)
                 avg_s = mean(objectives)
+
+                min_s_start = minimum(start_objectives)
+                max_s_start = maximum(start_objectives)
+                avg_s_start = mean(start_objectives)
+
+                avg_time = mean(times)
+                min_time = minimum(times)
+                max_time = maximum(times)
+
                 println(start_type," ", local_search_func," ", intra_function)
-                println("Min: $(objectives[min_s]) at start $(min_s)")
-                println("Max: $(objectives[max_s]) at start $(max_s)")
-                println("Avg: $(avg_s)")
+                println("After Local Search | Starting Solution")
+                println("Obj: $(fmt(avg_s)) ($(fmt(objectives[min_s])) – $(fmt(objectives[max_s]))) | Obj: $(fmt(avg_s_start)) ($(fmt(min_s_start)) – $(fmt(max_s_start)))")
+                println("Time[s]: $(fmt(avg_time)) ($(fmt(min_time)) – $(fmt(max_time)))")
             end
         end
     end
@@ -39,7 +58,14 @@ function greedy_local_search(starting_solution, distance_matrix, costs, intra_fu
     objective = calculate_cycle_length(starting_solution, distance_matrix, costs)
     improvement = true
 
-    intra_move = [(i, j) for i in 1:n for j in i+1:n]
+    if intra_function == intra_two_nodes_exchange
+        intra_move = [(i, j) for i in 1:n for j in i+1:n]
+    elseif intra_function == intra_two_edges_exchange
+        intra_move = [(i, j) for i in 1:n for j in i+2:n if abs(i - j) != n - 1]
+    else
+        println("invalide intra function")
+        return
+    end
 
     while improvement
         improvement = false
@@ -56,7 +82,7 @@ function greedy_local_search(starting_solution, distance_matrix, costs, intra_fu
             if move_kind == :intra
                 new_objective, new_solution = intra_function(solution, objective, a, b, distance_matrix)
             else
-                new_objective, new_solution = Inf, nothing#inter_function(solution, objective, a, b, distance_matrix, costs)
+                new_objective, new_solution = inter_function(solution, objective, a, b, distance_matrix, costs)
             end
             if new_objective < objective
 
@@ -77,7 +103,14 @@ function steepest_local_search(starting_solution, distance_matrix, costs, intra_
     objective = calculate_cycle_length(starting_solution, distance_matrix, costs)
     improvement = true
 
-    intra_move = [(i, j) for i in 1:n for j in i+1:n]
+    if intra_function == intra_two_nodes_exchange
+        intra_move = [(i, j) for i in 1:n for j in i+1:n]
+    elseif intra_function == intra_two_edges_exchange
+        intra_move = [(i, j) for i in 1:n for j in i+2:n if abs(i - j) != n - 1]
+    else
+        println("invalide intra function")
+        return
+    end
 
     while improvement
         improvement = false
@@ -87,22 +120,23 @@ function steepest_local_search(starting_solution, distance_matrix, costs, intra_
 
         moves = [(m, :intra) for m in intra_move]
         append!(moves, [(m, :inter) for m in inter_move])
-        shuffle!(moves)
 
-
+        best_objective, best_solution = Inf, nothing
         for ((a,b), move_kind) in moves
             if move_kind == :intra
                 new_objective, new_solution = intra_function(solution, objective, a, b, distance_matrix)
             else
-                new_objective, new_solution = Inf, nothing#inter_function(solution, objective, a, b, distance_matrix, costs)
+                new_objective, new_solution = inter_function(solution, objective, a, b, distance_matrix, costs)
             end
-            if new_objective < objective
-
-                solution = new_solution
-                objective = new_objective
+            if new_objective < objective && new_objective < best_objective
+                best_solution = new_solution
+                best_objective = new_objective
                 improvement = true
-                break
             end
+        end
+
+        if improvement
+            solution, objective = best_solution, best_objective
         end
     end
 
