@@ -9,7 +9,7 @@ function calculate_cycle_length(solution, distance_matrix, costs)
     n = length(solution)
     for i in 1:n
         next_i = mod1(i + 1, n)  # Wraps around to 1 when i == n
-        score += distance_matrix[solution[i], solution[next_i]] + costs[next_i]
+        score += distance_matrix[solution[i], solution[next_i]] + costs[solution[next_i]]
     end
     return score
 end
@@ -49,23 +49,21 @@ function test_algorithm(search_function, distance_matrix, costs; weights=[1, 0])
     return scores, solutions
 end
 
+
 function plot_best_solution(scores, solutions, data_path, title, save_path)
     best_solution_index = argmin(scores)
     best_solution = solutions[best_solution_index]
 
-    # Load the data to get x, y coordinates
     data = CSV.read(data_path, DataFrame; header=["x", "y", "w"])
+    all_costs = collect(data[:, "w"])
+    min_cost, max_cost = extrema(all_costs)
 
-    # Extract coordinates for the solution path
     x_coords = [data[i, "x"] for i in best_solution]
     y_coords = [data[i, "y"] for i in best_solution]
-
-    # Close the cycle by adding the first point at the end
     push!(x_coords, data[best_solution[1], "x"])
     push!(y_coords, data[best_solution[1], "y"])
 
-    # Plot
-    p = plot(x_coords, y_coords,
+    p = plot(x_coords, y_coords;
         line=:solid,
         linewidth=2,
         marker=:circle,
@@ -76,13 +74,25 @@ function plot_best_solution(scores, solutions, data_path, title, save_path)
         title=title,
         legend=:best)
 
-    # Optionally plot all nodes
-    scatter!(data[:, "x"], data[:, "y"],
+    scatter!(p,
+        data[:, "x"],
+        data[:, "y"];
         marker=:circle,
         markersize=4,
-        color=:lightgray,
-        label="All Nodes",
-        alpha=0.5)
+        marker_z=all_costs,
+        color=cgrad(:grays, rev=true),
+        clims=(min_cost, max_cost),
+        label="Node Cost",
+        alpha=0.85,
+        colorbar_title="Cost")
 
     savefig(p, save_path)
+end
+
+
+function print_best_solution_zero_indexed(scores, solutions)
+    best_idx = argmin(scores)
+    best_solution = solutions[best_idx]
+    zero_indexed = [node - 1 for node in best_solution]
+    println("The best solution presented as a list of nodes indices (starting from 0): $(zero_indexed)")
 end
