@@ -35,3 +35,43 @@ function random_start(distance_matrix, costs, weights, start)
     k = ceil(Int, n / 2)
     return randperm(n)[1:k]
 end
+
+function plot_best_solution(scores, solutions, data_path, title, save_path)
+    best_solution_index = argmin(scores)
+    best_solution = solutions[best_solution_index]
+
+    data = CSV.read(data_path, DataFrame; header=["x", "y", "w"])
+    all_costs = collect(data[:, "w"])
+    min_cost, max_cost = extrema(all_costs)
+
+    x_coords = [data[i, "x"] for i in best_solution]
+    y_coords = [data[i, "y"] for i in best_solution]
+    push!(x_coords, data[best_solution[1], "x"])
+    push!(y_coords, data[best_solution[1], "y"])
+
+    p = plot(x_coords, y_coords;
+        line=:solid,
+        linewidth=2,
+        # marker=:circle,
+        # markersize=6,
+        label="Best Solution Path",
+        xlabel="X",
+        ylabel="Y",
+        title=title,
+        titlefont=font(8),
+        legend=:best)
+
+    scatter!(p,
+        data[:, "x"],
+        data[:, "y"];
+        marker=:circle,
+        markersize=4,
+        marker_z=all_costs,
+        color=cgrad([:blue, :red]),
+        clims=(min_cost, max_cost),
+        label="Node Cost",
+        alpha=0.85,
+        colorbar_title="Cost")
+
+    savefig(p, save_path)
+end

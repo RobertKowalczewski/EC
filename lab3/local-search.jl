@@ -3,12 +3,15 @@ using Random, ProgressMeter, Statistics
 include("moves.jl")
 include("helpers.jl")
 include("nn-greedy-2-regret.jl")
+include("greedy-cycle-2-regret.jl")
 
 
-function test_algorithms(distance_matrix, costs)
-    for start_type in [random_start, nn_greedy_2_regret] # TODO
-        for local_search_func in [steepest_local_search, greedy_local_search] # TODO
-            for intra_function in [intra_two_edges_exchange, intra_two_nodes_exchange] # TODO
+function test_algorithms(distance_matrix, costs, data_path, data_name)
+    for start_type in [greedy_cycle_2_regret, random_start]
+        for local_search_func in [steepest_local_search, greedy_local_search]
+            for intra_function in [intra_two_edges_exchange, intra_two_nodes_exchange]
+
+                println(start_type," ", local_search_func," ", intra_function)
                 
                 objectives = []
                 solutions = []
@@ -16,7 +19,7 @@ function test_algorithms(distance_matrix, costs)
                 start_objectives = []
                 times = []
 
-                fmt(x) = round(x; digits=2)
+                fmt(x) = round(x; digits=5)
 
                 @showprogress 0.1 "runs" for run in 1:200
                     starting_solution = start_type(distance_matrix,costs, [0.5, 0.5], run)
@@ -29,6 +32,11 @@ function test_algorithms(distance_matrix, costs)
 
                     push!(starts, starting_solution)
                     push!(start_objectives, calculate_cycle_length(starting_solution, distance_matrix, costs))
+
+                    if run == 1
+                        println("solution from first node:")
+                        println([x-1 for x in solution])
+                    end
                 end
 
                 min_s = argmin(objectives)
@@ -43,10 +51,15 @@ function test_algorithms(distance_matrix, costs)
                 min_time = minimum(times)
                 max_time = maximum(times)
 
-                println(start_type," ", local_search_func," ", intra_function)
+
                 println("After Local Search | Starting Solution")
-                println("Obj: $(fmt(avg_s)) ($(fmt(objectives[min_s])) – $(fmt(objectives[max_s]))) | Obj: $(fmt(avg_s_start)) ($(fmt(min_s_start)) – $(fmt(max_s_start)))")
-                println("Time[s]: $(fmt(avg_time)) ($(fmt(min_time)) – $(fmt(max_time)))")
+                println("Obj: $(fmt(avg_s)) ($(fmt(objectives[min_s])) - $(fmt(objectives[max_s]))) | Obj: $(fmt(avg_s_start)) ($(fmt(min_s_start)) - $(fmt(max_s_start)))")
+                println("Time[s]: $(avg_time) ($(min_time) - $(max_time))")
+
+                plot_best_solution(objectives, solutions,
+                data_path, 
+                "$(start_type)_$(local_search_func)_$(intra_function)",
+                "lab3/$(data_name)/$(start_type)_$(local_search_func)_$(intra_function).png")
             end
         end
     end
