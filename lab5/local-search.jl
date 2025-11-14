@@ -65,6 +65,19 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
     end
 end
 
+function check_if_applicable(solution, move_kind, old_edges, new_edges)
+    if move_kind == :inter
+        # Removed edges (defining the saved move) no longer exist in the current solution (at least one of them)
+        old_edge_removed = false
+        for (a, b) in old_edges
+            check_edge_exists(solution, a, b)
+        end
+
+    else
+
+    end
+end
+
 function steepest_local_search(starting_solution, distance_matrix, costs, intra_function, inter_function)
     n = length(starting_solution)
     solution = starting_solution
@@ -83,6 +96,31 @@ function steepest_local_search(starting_solution, distance_matrix, costs, intra_
 
         moves = [(m, :intra) for m in intra_move]
         append!(moves, [(m, :inter) for m in inter_move])
+
+        for ((a, b), move_kind) in moves
+            if move_kind == :intra
+                new_objective, old_edges, new_edges = intra_function(solution, objective, a, b, distance_matrix)
+            else
+                new_objective, old_edges, new_edges = inter_function(solution, objective, a, b, distance_matrix, costs)
+            end
+            if new_objective < objective
+                append!(LM, [new_objective, move_kind, old_edges, new_edges])
+            end
+        end
+
+        sort!(LM, by=x -> x[1], rev=true)
+
+        # For moves m from LM starting from the best until a applicable move is found
+        for (new_objective, move_kind, old_edges, new_edges) in LM
+            # Check if m is applicable and if not remove it from LM
+            applicable, new_solution = check_if_applicable(solution, move_kind, old_edges, new_edges)
+            if applicable
+                improvement = true
+                solution = new_solution
+                objective = new_objective # ?
+                break
+            end
+        end
 
 
 

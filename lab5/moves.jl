@@ -16,11 +16,10 @@ function intra_two_edges_exchange(solution, objective, a, b, distance_matrix)
     delta = new_edges - old_edges
     new_objective = objective + delta  # node costs unchanged
 
-    # create new route by reversing segment (a+1 to b)
-    new_solution = copy(solution)
-    new_solution[a+1:b] = reverse(solution[a+1:b])
+    old_edges = [(solution[a1], solution[a2]), (solution[b1], solution[b2])]
+    new_edges = [(solution[a1], solution[b1]), (solution[a2], solution[b2])]
 
-    return new_objective, new_solution
+    return new_objective, old_edges, new_edges
 end
 
 function inter_two_nodes_exchange(solution, objective, a, b, distance_matrix, costs)
@@ -40,8 +39,8 @@ function inter_two_nodes_exchange(solution, objective, a, b, distance_matrix, co
     delta = (new_edges - old_edges) + delta_cost
     new_objective = objective + delta
 
-    new_solution = copy(solution)
-    new_solution[a] = b
+    old_edges = [(solution[prev_a], solution[a]), (solution[a], solution[next_a])]
+    new_edges = [(solution[prev_a], b), (b, solution[next_a])]
 
-    return new_objective, new_solution
+    return new_objective, old_edges, new_edges
 end

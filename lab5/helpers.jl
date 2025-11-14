@@ -4,6 +4,16 @@ function euclidean(a, b)
     return round(sqrt((a[1] - b[1])^2 + (a[2] - b[2])^2))
 end
 
+function check_edge_exists(solution, a, b)
+    i = findfirst(solution, a)
+    if isnothing(i)
+        return false
+    end
+    j = i == length(solution) ? 1 : i + 1
+
+    return solution[j] == b
+end
+
 function prepare_data(data_path)
     data = CSV.read(data_path, DataFrame; header=["x", "y", "w"])
     distance_matrix = zeros(nrow(data), nrow(data))
