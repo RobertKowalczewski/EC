@@ -3,7 +3,7 @@ function intra_two_edges_exchange(solution, objective, a, b, distance_matrix)
     n = length(solution)
     if a == b || abs(a - b) == 1 || abs(a - b) == n - 1
         println("INVALID NODES")
-        return objective, solution
+        return objective, Tuple{Int,Int}[], Tuple{Int,Int}[]
     end
     a1 = a
     a2 = a == n ? 1 : a + 1
