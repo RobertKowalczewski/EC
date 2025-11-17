@@ -11,5 +11,5 @@ test_algorithms(distance_matrix, costs, data_path, "TSPA")
 println("TSPB:")
 data_path = "lab1/TSPB.csv"
 distance_matrix, costs = prepare_data(data_path)
-plr
+
 test_algorithms(distance_matrix, costs, data_path, "TSPB")

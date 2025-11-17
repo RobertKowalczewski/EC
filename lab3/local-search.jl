@@ -7,12 +7,12 @@ include("greedy-cycle-2-regret.jl")
 
 
 function test_algorithms(distance_matrix, costs, data_path, data_name)
-    for start_type in [greedy_cycle_2_regret, random_start]
-        for local_search_func in [steepest_local_search, greedy_local_search]
-            for intra_function in [intra_two_edges_exchange, intra_two_nodes_exchange]
+    for start_type in [random_start]
+        for local_search_func in [steepest_local_search]
+            for intra_function in [intra_two_nodes_exchange]
 
-                println(start_type," ", local_search_func," ", intra_function)
-                
+                println(start_type, " ", local_search_func, " ", intra_function)
+
                 objectives = []
                 solutions = []
                 starts = []
@@ -22,7 +22,7 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
                 fmt(x) = round(x; digits=5)
 
                 @showprogress 0.1 "runs" for run in 1:200
-                    starting_solution = start_type(distance_matrix,costs, [0.5, 0.5], run)
+                    starting_solution = start_type(distance_matrix, costs, [0.5, 0.5], run)
                     t = @elapsed begin
                         objective, solution = local_search_func(starting_solution, distance_matrix, costs, intra_function, inter_two_nodes_exchange)
                     end
@@ -35,7 +35,7 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
 
                     if run == 1
                         println("solution from first node:")
-                        println([x-1 for x in solution])
+                        println([x - 1 for x in solution])
                     end
                 end
 
@@ -57,9 +57,9 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
                 println("Time[s]: $(avg_time) ($(min_time) - $(max_time))")
 
                 plot_best_solution(objectives, solutions,
-                data_path, 
-                "$(start_type)_$(local_search_func)_$(intra_function)",
-                "lab3/$(data_name)/$(start_type)_$(local_search_func)_$(intra_function).png")
+                    data_path,
+                    "$(start_type)_$(local_search_func)_$(intra_function)",
+                    "lab3/$(data_name)/$(start_type)_$(local_search_func)_$(intra_function).png")
             end
         end
     end
@@ -91,7 +91,7 @@ function greedy_local_search(starting_solution, distance_matrix, costs, intra_fu
         shuffle!(moves)
 
 
-        for ((a,b), move_kind) in moves
+        for ((a, b), move_kind) in moves
             if move_kind == :intra
                 new_objective, new_solution = intra_function(solution, objective, a, b, distance_matrix)
             else
@@ -135,7 +135,7 @@ function steepest_local_search(starting_solution, distance_matrix, costs, intra_
         append!(moves, [(m, :inter) for m in inter_move])
 
         best_objective, best_solution = Inf, nothing
-        for ((a,b), move_kind) in moves
+        for ((a, b), move_kind) in moves
             if move_kind == :intra
                 new_objective, new_solution = intra_function(solution, objective, a, b, distance_matrix)
             else
