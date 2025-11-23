@@ -122,12 +122,12 @@ function report_algorithm(stats)
     println("Time[s]: $(fmt(stats.avg_time)) ($(fmt(stats.min_time)) - $(fmt(stats.max_time)))")
 end
 
-"""Apply random swaps and node replacements to diversify the route."""
+"""Apply structured perturbations (2-opt, swaps, replacements) to diversify the route."""
 function perturb(solution, distance_matrix, perturb_size; rng=Random.default_rng())
     perturbed = copy(solution)
     n = length(solution)
     total_nodes = size(distance_matrix, 1)
-    steps = max(1, Int(ceil(perturb_size)))
+    steps = max(2, 2 * Int(clamp(round(perturb_size), 1, n)))
 
     available_nodes = Vector{Int}()
     in_solution = falses(total_nodes)
@@ -141,16 +141,19 @@ function perturb(solution, distance_matrix, perturb_size; rng=Random.default_rng
     end
 
     for _ in 1:steps
-        perform_swap = isempty(available_nodes) ? true : rand(rng) < 0.5
-
-        if perform_swap && n > 1
+        r = rand(rng)
+        if r < 0.4 && n >= 4
+            i = rand(rng, 1:n-2)
+            j = rand(rng, i+2:n)
+            reverse!(perturbed, i, j)
+        elseif r < 0.7 && n >= 2
             i = rand(rng, 1:n)
             j = rand(rng, 1:n)
             while j == i
                 j = rand(rng, 1:n)
             end
             perturbed[i], perturbed[j] = perturbed[j], perturbed[i]
-        else
+        elseif !isempty(available_nodes)
             idx = rand(rng, 1:n)
             avail_idx = rand(rng, 1:length(available_nodes))
             new_node = available_nodes[avail_idx]
@@ -162,6 +165,7 @@ function perturb(solution, distance_matrix, perturb_size; rng=Random.default_rng
 
     return perturbed
 end
+
 
 function iterated_local_search(distance_matrix, costs, run_time; perturb_size=2, rng=Random.default_rng(), initial_solution=nothing)
     x = isnothing(initial_solution) ? random_start(distance_matrix; rng=rng) : copy(initial_solution)
