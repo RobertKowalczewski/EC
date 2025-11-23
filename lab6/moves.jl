@@ -1,47 +1,35 @@
 
-function intra_two_edges_exchange(solution, objective, a, b, distance_matrix)
-    n = length(solution)
-    if a == b || abs(a - b) == 1 || abs(a - b) == n - 1
-        println("INVALID NODES")
-        return objective, solution
-    end
-    a1 = a
+@inline function intra_two_edges_delta(solution, a, b, distance_matrix, n)
     a2 = a == n ? 1 : a + 1
-    b1 = b
     b2 = b == n ? 1 : b + 1
 
-    old_edges = distance_matrix[solution[a1], solution[a2]] + distance_matrix[solution[b1], solution[b2]]
-    new_edges = distance_matrix[solution[a1], solution[b1]] + distance_matrix[solution[a2], solution[b2]]
-
-    delta = new_edges - old_edges
-    new_objective = objective + delta  # node costs unchanged
-
-    # create new route by reversing segment (a+1 to b)
-    new_solution = copy(solution)
-    new_solution[a+1:b] = reverse(solution[a+1:b])
-
-    return new_objective, new_solution
+    old_edges = distance_matrix[solution[a], solution[a2]] + distance_matrix[solution[b], solution[b2]]
+    new_edges = distance_matrix[solution[a], solution[b]] + distance_matrix[solution[a2], solution[b2]]
+    return new_edges - old_edges
 end
 
-function inter_two_nodes_exchange(solution, objective, a, b, distance_matrix, costs)
-    n = length(solution)
-
+@inline function inter_two_nodes_delta(solution, a, new_node, distance_matrix, costs, n)
     prev_a = a == 1 ? n : a - 1
     next_a = a == n ? 1 : a + 1
+    current_node = solution[a]
 
-    # Remove node i and insert b in its place
-    old_edges = distance_matrix[solution[prev_a], solution[a]] + distance_matrix[solution[a], solution[next_a]]
-    new_edges = distance_matrix[solution[prev_a], b] + distance_matrix[b, solution[next_a]]
+    old_edges = distance_matrix[solution[prev_a], current_node] + distance_matrix[current_node, solution[next_a]]
+    new_edges = distance_matrix[solution[prev_a], new_node] + distance_matrix[new_node, solution[next_a]]
+    return (new_edges - old_edges) + (costs[new_node] - costs[current_node])
+end
 
+@inline function apply_intra_two_edges!(solution, a, b)
+    left = a + 1
+    right = b
+    while left < right
+        solution[left], solution[right] = solution[right], solution[left]
+        left += 1
+        right -= 1
+    end
+end
 
-    # Node cost change
-    delta_cost = costs[b] - costs[solution[a]]
-
-    delta = (new_edges - old_edges) + delta_cost
-    new_objective = objective + delta
-
-    new_solution = copy(solution)
-    new_solution[a] = b
-
-    return new_objective, new_solution
+@inline function apply_inter_two_nodes!(solution, a, new_node)
+    old_node = solution[a]
+    solution[a] = new_node
+    return old_node
 end

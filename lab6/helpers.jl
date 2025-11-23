@@ -30,10 +30,11 @@ function calculate_cycle_length(solution, distance_matrix, costs)
     return score
 end
 
-function random_start(distance_matrix)
+function random_start(distance_matrix; rng=Random.default_rng())
     n = size(distance_matrix, 1)
     k = ceil(Int, n / 2)
-    return randperm(n)[1:k]
+    perm = randperm(rng, n)
+    return perm[1:k]
 end
 
 function plot_best_solution(scores, solutions, data_path, title, save_path)
