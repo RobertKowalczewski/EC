@@ -12,12 +12,12 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
 
     fmt(x) = round(x; digits=5)
 
-    time = 10
 
-    @showprogress 0.1 "runs" for run in 1:20
+    # msls
+    @showprogress 0.1 "runs" for run in 1:2
         starting_solution = random_start(distance_matrix)
         t = @elapsed begin
-            objective, solution = iterated_local_search(distance_matrix, costs, time)
+            objective, solution = multiple_start_local_search(distance_matrix, costs)
         end
         push!(times, t)
         push!(objectives, objective)
@@ -51,8 +51,52 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
 
     plot_best_solution(objectives, solutions,
         data_path,
-        "$(start_type)_$(local_search_func)_$(intra_function)",
-        "lab3/$(data_name)/$(start_type)_$(local_search_func)_$(intra_function).png")
+        "$(start_type)_MSLS",
+        "lab6/$(data_name)/$(start_type)_multiple_start_LS.png")
+
+    # ils
+    num_basic_iterations = []
+    @showprogress 0.1 "runs" for run in 1:20
+        starting_solution = random_start(distance_matrix)
+        t = @elapsed begin
+            objective, solution, i = iterated_local_search(distance_matrix, costs, avg_time)
+        end
+        push!(times, t)
+        push!(objectives, objective)
+        push!(solutions, solution)
+        push!(num_basic_iterations, i)
+
+        push!(starts, starting_solution)
+        push!(start_objectives, calculate_cycle_length(starting_solution, distance_matrix, costs))
+
+        if run == 1
+            println("solution from first node:")
+            println([x - 1 for x in solution])
+        end
+    end
+
+    min_s = argmin(objectives)
+    max_s = argmax(objectives)
+    avg_s = mean(objectives)
+
+    min_s_start = minimum(start_objectives)
+    max_s_start = maximum(start_objectives)
+    avg_s_start = mean(start_objectives)
+
+    avg_time = mean(times)
+    min_time = minimum(times)
+    max_time = maximum(times)
+
+
+    println("After Local Search | Starting Solution")
+    println("Obj: $(fmt(avg_s)) ($(fmt(objectives[min_s])) - $(fmt(objectives[max_s]))) | Obj: $(fmt(avg_s_start)) ($(fmt(min_s_start)) - $(fmt(max_s_start)))")
+    println("Time[s]: $(avg_time) ($(min_time) - $(max_time))")
+    print("number of basic iterations of LS: $(num_basic_iterations)")
+
+    plot_best_solution(objectives, solutions,
+        data_path,
+        "$(start_type)_ILS",
+        "lab6/$(data_name)/$(start_type)_iterated_local_search.png")
 end
 
 """Apply random swaps and node replacements to diversify the route."""
@@ -90,8 +134,10 @@ function iterated_local_search(distance_matrix, costs, run_time; perturb_size=2)
     x = random_start(distance_matrix)
     objective, x = steepest_local_search(x, distance_matrix, costs, intra_two_edges_exchange, inter_two_nodes_exchange)
     start_time = time()
+    i = 0
 
     while (time() - start_time) <= run_time
+        i += 1
         y = perturb(x, distance_matrix, perturb_size)
         objective_y, y = steepest_local_search(y, distance_matrix, costs, intra_two_edges_exchange, inter_two_nodes_exchange)
         if objective_y < objective
@@ -99,7 +145,20 @@ function iterated_local_search(distance_matrix, costs, run_time; perturb_size=2)
         end
     end
 
-    return objective, x
+    return objective, x, i
+end
+
+function multiple_start_local_search(distance_matrix, costs)
+    objective, solution = Inf, nothing
+    for i in 1:20
+        new_objective, new_solution = steepest_local_search(random_start(distance_matrix), distance_matrix, costs, intra_two_edges_exchange, inter_two_nodes_exchange)
+
+        if new_objective < objective
+            objective, solution = new_objective, new_solution
+        end
+    end
+
+    return objective, solution
 end
 
 function steepest_local_search(starting_solution, distance_matrix, costs, intra_function, inter_function)
