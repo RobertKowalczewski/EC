@@ -14,7 +14,8 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
 
 
     # msls
-    @showprogress 0.1 "runs" for run in 1:2
+    println("MSLS:")
+    @showprogress 0.1 "runs" for run in 1:20
         starting_solution = random_start(distance_matrix)
         t = @elapsed begin
             objective, solution = multiple_start_local_search(distance_matrix, costs)
@@ -51,10 +52,11 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
 
     plot_best_solution(objectives, solutions,
         data_path,
-        "$(start_type)_MSLS",
-        "lab6/$(data_name)/$(start_type)_multiple_start_LS.png")
+        "MSLS",
+        "lab6/$(data_name)/multiple_start_LS.png")
 
     # ils
+    println("ILS:")
     num_basic_iterations = []
     @showprogress 0.1 "runs" for run in 1:20
         starting_solution = random_start(distance_matrix)
@@ -89,14 +91,13 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
 
 
     println("After Local Search | Starting Solution")
-    println("Obj: $(fmt(avg_s)) ($(fmt(objectives[min_s])) - $(fmt(objectives[max_s]))) | Obj: $(fmt(avg_s_start)) ($(fmt(min_s_start)) - $(fmt(max_s_start)))")
     println("Time[s]: $(avg_time) ($(min_time) - $(max_time))")
-    print("number of basic iterations of LS: $(num_basic_iterations)")
+    println("number of basic iterations of LS: $(num_basic_iterations)")
 
     plot_best_solution(objectives, solutions,
         data_path,
-        "$(start_type)_ILS",
-        "lab6/$(data_name)/$(start_type)_iterated_local_search.png")
+        "ILS",
+        "lab6/$(data_name)/iterated_local_search.png")
 end
 
 """Apply random swaps and node replacements to diversify the route."""
@@ -150,7 +151,7 @@ end
 
 function multiple_start_local_search(distance_matrix, costs)
     objective, solution = Inf, nothing
-    for i in 1:20
+    for i in 1:200
         new_objective, new_solution = steepest_local_search(random_start(distance_matrix), distance_matrix, costs, intra_two_edges_exchange, inter_two_nodes_exchange)
 
         if new_objective < objective

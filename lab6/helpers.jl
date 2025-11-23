@@ -73,5 +73,6 @@ function plot_best_solution(scores, solutions, data_path, title, save_path)
         alpha=0.85,
         colorbar_title="Cost")
 
+    mkpath(dirname(save_path))
     savefig(p, save_path)
 end
