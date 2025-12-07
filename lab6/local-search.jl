@@ -112,8 +112,8 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
         "$(data_name)_ILS",
         "$(data_name)_iterated_local_search.png")
 
-    println("solution from first node:")
-    println([x - 1 for x in ils_runs.solutions[1]])
+    println("best_solution")
+    println([ils_runs.solutions[ils_stats.best_index]])
 end
 
 function report_algorithm(stats)
