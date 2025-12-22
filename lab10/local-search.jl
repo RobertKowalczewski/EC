@@ -83,14 +83,14 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
         end,
     )
     msls_stats = summarize_runs(msls_runs)
-    report_algorithm(msls_stats)
-    plot_best_solution(msls_runs.objectives, msls_runs.solutions,
-        data_path,
-        "$(data_name)_MSLS",
-        "$(data_name)_multiple_start_LS.png")
+    # report_algorithm(msls_stats)
+    # plot_best_solution(msls_runs.objectives, msls_runs.solutions,
+    #     data_path,
+    #     "$(data_name)_MSLS",
+    #     "$(data_name)_multiple_start_LS.png")
 
-    println("solution from first node:")
-    println([x - 1 for x in msls_runs.solutions[1]])
+    # println("solution from first node:")
+    # println([x - 1 for x in msls_runs.solutions[1]])
 
     run_time = max(msls_stats.avg_time, eps())
     println("run time: ", run_time)
@@ -114,7 +114,7 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
     plot_best_solution(ils_runs.objectives, ils_runs.solutions,
         data_path,
         "$(data_name)_ILS",
-        "$(data_name)_iterated_local_search_recomputed_time.png")
+        "lab10/plots/$(data_name)_iterated_local_search_recomputed_time.png")
 
     println("ILS (Memory):")
     ils_mem_runs = run_parallel_runs(
@@ -136,7 +136,7 @@ function test_algorithms(distance_matrix, costs, data_path, data_name)
     plot_best_solution(ils_mem_runs.objectives, ils_mem_runs.solutions,
         data_path,
         "$(data_name)_ILS_Memory",
-        "$(data_name)_iterated_local_search_memory_recomputed_time.png")
+        "lab10/plots/$(data_name)_iterated_local_search_memory_recomputed_time.png")
 
     println("best_solution")
     println([ils_runs.solutions[ils_stats.best_index]])

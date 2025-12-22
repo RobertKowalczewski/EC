@@ -471,9 +471,9 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
 	data_path = length(ARGS) >= 1 ? ARGS[1] : "TSPB.csv"
 	if data_path == "TSPA.csv"
-		time_limit = 0.595
+		time_limit = 1.59246505045
 	else
-		time_limit = 0.686
+		time_limit = 1.9890074519000003
 	end
 	Random.seed!(1234)
 	run_instance(data_path, time_limit=time_limit)
